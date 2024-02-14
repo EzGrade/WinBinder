@@ -354,13 +354,15 @@ public:
             return 0xBD;
         } else if (key == "=") {
             return 0xBB;
-        } else if (key == "lctrl") {
+        } else if (key == "lctrl" || key == "ctrl") {
             return 162;
         } else if (key == "rctrl") {
             return 163;
-        } else if (key == "alt") {
-            return 0x12;
-        } else if (key == "lshift") {
+        } else if (key == "lalt" || key == "alt") {
+            return 164;
+        } else if (key == "ralt") {
+            return 165;
+        } else if (key == "lshift" || key == "shift") {
             return 0xA0;
         } else if (key == "rshift") {
             return 0xA1;
@@ -531,5 +533,6 @@ int main() {
     Keyboard keyboard;
     keyboard.setDelay(0);
     keyboard.addBind("lctrl+lshift", "test@test.com");
+    keyboard.addBind("lctrl+alt", "test1@test.com");
     keyboard.keysLister();
 };
