@@ -362,7 +362,7 @@ public:
         }
     }
 
-    mapMixed(const std::string &key) {
+    std::vector<int> mapMixed(const std::string &key) {
         std::vector<int> keys;
         if (key == "!") {
             keys.push_back(mapKeys("lshift"));
