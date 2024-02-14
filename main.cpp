@@ -1,10 +1,12 @@
 #include <windows.h>
 #include <iostream>
+#include <utility>
 #include <vector>
 #include <map>
 #include <set>
 #include <array>
 #include <algorithm>
+#include <memory>
 
 class Screen {
 public:
@@ -82,6 +84,10 @@ public:
     }
 };
 
+class Action {
+public:
+    virtual void execute() = 0; // Pure virtual function makes Action an abstract base class
+};
 
 class Keyboard {
 private:
@@ -90,19 +96,18 @@ private:
     // Key: string of keys separated by '+'
     // Value: vector of virtual key codes
     std::map<std::vector<int>, std::vector<int>> keyBinds;
+    std::map<std::vector<int>, Action *> actionBinds;
 
 public:
     void setDelay(int delayMs) {
         this->delay = delayMs;
     }
 
-    void addBind(const std::string &key, const std::string &command) {
+    std::vector<int> parseBindKeys(std::string &bind) {
         std::vector<int> keys;
-
-        // Split the key string by '+'
         std::vector<std::string> splitKeys;
         std::string temp_str;
-        for (char c: key) {
+        for (char c: bind) {
             if (c == '+') {
                 splitKeys.push_back(temp_str);
                 temp_str = "";
@@ -111,16 +116,14 @@ public:
             }
         }
         splitKeys.push_back(temp_str);
-
-        // Map the keys to their virtual key codes
         for (const std::string &c: splitKeys) {
-            int temp = mapKeys(c);
+            int temp = Keyboard::mapKeys(c);
             if (temp != 0) {
                 keys.push_back(temp);
             } else {
-                temp = mapKeys(c);
+                temp = Keyboard::mapKeys(c);
                 if (temp != 0) {
-                    keys.push_back(mapKeys("lshift"));
+                    keys.push_back(Keyboard::mapKeys("lshift"));
                     keys.push_back(temp);
                 } else {
                     std::vector<int> mixedKeys = mapMixed(c);
@@ -130,6 +133,15 @@ public:
                 }
             }
         }
+        return keys;
+    }
+
+    void addBind(const std::string &key, const std::string &command) {
+        std::vector<int> keys;
+
+        // Split the key string by '+'
+        keys = parseBindKeys(const_cast<std::string &>(key));
+
 
         // Map the command to its virtual key codes
         std::vector<int> commandKeys;
@@ -154,6 +166,12 @@ public:
         // Sort the keys
         std::sort(keys.begin(), keys.end());
         this->keyBinds[keys] = commandKeys;
+    }
+
+    void addBindAction(const std::string &key, Action *action) {
+        std::vector<int> keys = parseBindKeys(const_cast<std::string &>(key));
+        std::sort(keys.begin(), keys.end());
+        this->actionBinds[keys] = action;
     }
 
     void executeBind(const std::vector<int> &key) {
@@ -194,6 +212,7 @@ public:
                             continue;
                         }
                         bool found = true;
+
                         for (int j = 0; j < bind.first.size(); j++) {
                             if (pressed_keys.find(bind.first[j]) == pressed_keys.end()) {
                                 found = false;
@@ -201,11 +220,31 @@ public:
                             }
                         }
                         if (found) {
-                            // Release the keys
-                            for (int j: bind.first) {
+                            // Release all keys
+                            for (int j: pressed_keys) {
                                 releaseKey(j);
                             }
                             executeBind(bind.first);
+                        }
+                    }
+                    for (auto &bind: this->actionBinds) {
+                        if (bind.first.size() > pressed_keys.size()) {
+                            continue;
+                        }
+                        bool found = true;
+
+                        for (int j = 0; j < bind.first.size(); j++) {
+                            if (pressed_keys.find(bind.first[j]) == pressed_keys.end()) {
+                                found = false;
+                                break;
+                            }
+                        }
+                        if (found) {
+                            // Release all keys
+                            for (int j: pressed_keys) {
+                                releaseKey(j);
+                            }
+                            bind.second->execute();
                         }
                     }
                     pressed_keys.erase(i);
@@ -524,11 +563,46 @@ public:
 
 };
 
+class Browser {
+public:
+    static void open(const std::string &url) {
+        ShellExecute(nullptr, "open", url.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    }
+};
+
+class BrowserAction : public Action {
+private:
+    std::string url;
+public:
+    explicit BrowserAction(std::string url) : url(std::move(url)) {}
+
+    void execute() override {
+        Browser::open(url);
+    }
+};
+
+class OpenExe {
+public:
+    static void open(const std::string &path) {
+        ShellExecute(nullptr, "open", path.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    }
+};
+
+class OpenExeAction : public Action {
+private:
+    std::string path;
+public:
+    explicit OpenExeAction(std::string path) : path(std::move(path)) {}
+
+    void execute() override {
+        OpenExe::open(path);
+    }
+};
 
 int main() {
     Keyboard keyboard;
     keyboard.setDelay(0);
-    keyboard.addBind("lshift+rshift+tab", "test@test.com");
-    std::cout << Screen::getWidth() << "*" << Screen::getHeight() << std::endl;
+    std::unique_ptr<Action> browser = std::make_unique<BrowserAction>("https://www.google.com");
+    keyboard.addBindAction("ctrl+shift+o", browser.get());
     keyboard.keysLister();
 };
