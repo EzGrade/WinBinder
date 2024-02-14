@@ -6,6 +6,17 @@
 #include <array>
 #include <algorithm>
 
+class Screen {
+public:
+    static int getWidth() {
+        return GetSystemMetrics(SM_CXSCREEN);
+    }
+
+    static int getHeight() {
+        return GetSystemMetrics(SM_CYSCREEN);
+    }
+};
+
 class Mouse {
 public:
     static void move(int x, int y) {
@@ -140,19 +151,6 @@ public:
             }
         }
 
-        std::cout << "Adding bind: ";
-        std::cout << "Keys: ";
-        for (int i: keys) {
-            std::cout << i << " ";
-        }
-        std::cout << std::endl;
-
-        std::cout << "Command: ";
-        for (int i: commandKeys) {
-            std::cout << i << " ";
-        }
-        std::cout << std::endl;
-
         // Sort the keys
         std::sort(keys.begin(), keys.end());
         this->keyBinds[keys] = commandKeys;
@@ -177,7 +175,7 @@ public:
     [[noreturn]] void keysLister() {
         std::cout << "Listening for keys..." << std::endl;
         std::set<int> pressed_keys;
-        std::array<SHORT, 256> keyStates;
+        std::array<SHORT, 256> keyStates{};
         while (true) {
             // Get the state of all keys
             for (int i = 0; i < 256; i++) {
@@ -190,29 +188,27 @@ public:
                 bool isKeyDown = (keyStates[i] & 0x8000) != 0;
                 if (isKeyDown && pressed_keys.find(i) == pressed_keys.end()) {
                     pressed_keys.insert(i);
-                    std::cout << i << std::endl;
                 } else if (!isKeyDown && pressed_keys.find(i) != pressed_keys.end()) {
+                    for (auto &bind: this->keyBinds) {
+                        if (bind.first.size() > pressed_keys.size()) {
+                            continue;
+                        }
+                        bool found = true;
+                        for (int j = 0; j < bind.first.size(); j++) {
+                            if (pressed_keys.find(bind.first[j]) == pressed_keys.end()) {
+                                found = false;
+                                break;
+                            }
+                        }
+                        if (found) {
+                            // Release the keys
+                            for (int j: bind.first) {
+                                releaseKey(j);
+                            }
+                            executeBind(bind.first);
+                        }
+                    }
                     pressed_keys.erase(i);
-                }
-            }
-
-            for (auto &bind: this->keyBinds) {
-                if (bind.first.size() > pressed_keys.size()) {
-                    continue;
-                }
-                bool match = true;
-                for (int j = 0; j < bind.first.size(); j++) {
-                    if (bind.first[j] != *std::next(pressed_keys.begin(), j)) {
-                        match = false;
-                        break;
-                    }
-                }
-                if (match) {
-                    // Release all keys
-                    for (int i: pressed_keys) {
-                        releaseKey(i);
-                    }
-                    executeBind(bind.first);
                 }
             }
         }
@@ -532,7 +528,7 @@ public:
 int main() {
     Keyboard keyboard;
     keyboard.setDelay(0);
-    keyboard.addBind("lctrl+lshift", "test@test.com");
-    keyboard.addBind("lctrl+alt", "test1@test.com");
+    keyboard.addBind("lshift+rshift+tab", "test@test.com");
+    std::cout << Screen::getWidth() << "*" << Screen::getHeight() << std::endl;
     keyboard.keysLister();
 };
