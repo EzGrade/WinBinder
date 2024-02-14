@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <array>
+#include <algorithm>
 
 class Mouse {
 public:
@@ -144,11 +145,16 @@ public:
         for (int i: keys) {
             std::cout << i << " ";
         }
+        std::cout << std::endl;
+
         std::cout << "Command: ";
         for (int i: commandKeys) {
             std::cout << i << " ";
         }
+        std::cout << std::endl;
 
+        // Sort the keys
+        std::sort(keys.begin(), keys.end());
         this->keyBinds[keys] = commandKeys;
     }
 
@@ -184,6 +190,7 @@ public:
                 bool isKeyDown = (keyStates[i] & 0x8000) != 0;
                 if (isKeyDown && pressed_keys.find(i) == pressed_keys.end()) {
                     pressed_keys.insert(i);
+                    std::cout << i << std::endl;
                 } else if (!isKeyDown && pressed_keys.find(i) != pressed_keys.end()) {
                     pressed_keys.erase(i);
                 }
@@ -347,8 +354,10 @@ public:
             return 0xBD;
         } else if (key == "=") {
             return 0xBB;
-        } else if (key == "ctrl") {
-            return 0x11;
+        } else if (key == "lctrl") {
+            return 162;
+        } else if (key == "rctrl") {
+            return 163;
         } else if (key == "alt") {
             return 0x12;
         } else if (key == "lshift") {
@@ -521,6 +530,6 @@ public:
 int main() {
     Keyboard keyboard;
     keyboard.setDelay(0);
-    keyboard.addBind("lshift+rshift", "aborecevskij94@gmail.com");
+    keyboard.addBind("lctrl+lshift", "test@test.com");
     keyboard.keysLister();
 };
