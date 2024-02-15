@@ -25,6 +25,18 @@ add_executable(SimpleGUI
         Api/KeyboardSrc/Mappers/Mapper/Mapper.h
         Api/KeyboardSrc/Mappers/MixedMapper/MixedMapper.cpp
         Api/KeyboardSrc/Mappers/MixedMapper/MixedMapper.h
+        Utils/Json/JsonUtil.cpp
+        Utils/Json/JsonUtil.h
+        Api/BindSrc/Bind/Bind.cpp
+        Api/BindSrc/Bind/Bind.h
+        Actions/TextSrc/Text/Text.cpp
+        Actions/TextSrc/Text/Text.h
+        Actions/TextSrc/TextAction/TextAction.cpp
+        Actions/TextSrc/TextAction/TextAction.h
+
 )
 
 include_directories(${CMAKE_SOURCE_DIR})
+
+find_package(nlohmann_json CONFIG REQUIRED)
+target_link_libraries(SimpleGUI PRIVATE nlohmann_json::nlohmann_json)

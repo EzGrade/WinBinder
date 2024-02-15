@@ -1,0 +1,22 @@
+{
+  "binds": {
+    "Hello World": {
+      "key": "ctrl+shift+o",
+      "type": "text",
+      "action": "Hello, World!",
+      "path": ""
+    },
+    "Open Notepad": {
+      "key": "lshift+rshift",
+      "type": "exe",
+      "action": "",
+      "path": "C:\\Program Files\\7-Zip\\7zFM.exe"
+    },
+    "Open Google": {
+      "key": "ctrl+shift+g",
+      "type": "url",
+      "action": "",
+      "path": "https://www.google.com"
+    }
+  }
+}
